@@ -1,5 +1,7 @@
+import { Button } from "@/components/ui/button";
+
 const Home = () => {
-  return <h1 className="text-red-500">Welcome to Smart Finance</h1>;
+  return <Button>Hellou uai </Button>;
 };
 
 export default Home;
