@@ -14,8 +14,6 @@ import { TransactionPercentagePerType } from "@/app/data/get-dashboard/types";
 import { PiggyBankIcon, TrendingDownIcon, TrendingUpIcon } from "lucide-react";
 import PercentageItem from "./percentage-item";
 
-export const description = "A donut chart";
-
 const chartConfig = {
   [TransactionType.INVESTMENT]: {
     label: "Investido",
@@ -34,13 +32,13 @@ const chartConfig = {
 interface TransactionsPieChartProps {
   typesPercentage: TransactionPercentagePerType;
   depositsTotal: number;
+  investmentsTotal: number;
   expensesTotal: number;
-  investimentsTotal: number;
 }
 
 const TransactionsPieChart = ({
   depositsTotal,
-  investimentsTotal,
+  investmentsTotal,
   expensesTotal,
   typesPercentage,
 }: TransactionsPieChartProps) => {
@@ -53,12 +51,12 @@ const TransactionsPieChart = ({
     {
       type: TransactionType.EXPENSE,
       amount: expensesTotal,
-      fill: "E93030",
+      fill: "#E93030",
     },
     {
       type: TransactionType.INVESTMENT,
-      amount: investimentsTotal,
-      fill: "FFFFFF",
+      amount: investmentsTotal,
+      fill: "#FFFFFF",
     },
   ];
   return (
