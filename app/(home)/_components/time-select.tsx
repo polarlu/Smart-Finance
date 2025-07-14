@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  SelectItem,
-  SelectTrigger,
   Select,
   SelectContent,
+  SelectItem,
+  SelectTrigger,
   SelectValue,
 } from "@/app/_components/ui/select";
 import { useRouter, useSearchParams } from "next/navigation";
