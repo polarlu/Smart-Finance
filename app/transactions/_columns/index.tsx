@@ -7,7 +7,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import TransactionTypeBadge from "../_components/type-badge";
 import {
   TRANSACTION_CATEGORY_LABELS,
-  TRANSACTIONS_PAYMENT_METHODS_LABELS,
+  TRANSACTION_PAYMENT_METHOD_LABELS,
 } from "@/app/_constants/transactions";
 import EditTransactionButton from "../_components/edit-transactions-button";
 
@@ -34,7 +34,7 @@ export const transactionsColumns: ColumnDef<Transaction>[] = [
     accessorKey: "paymentMethod",
     header: "Metodo de Pagamento",
     cell: ({ row: { original: transaction } }) =>
-      TRANSACTIONS_PAYMENT_METHODS_LABELS[transaction.paymentMethod],
+      TRANSACTION_PAYMENT_METHOD_LABELS[transaction.paymentMethod],
   },
   {
     accessorKey: "date",

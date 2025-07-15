@@ -5,38 +5,38 @@ import {
 } from "@prisma/client";
 
 export const TRANSACTION_PAYMENT_METHOD_ICONS = {
-  [TransactionPaymentMethod.BANK_TRANSFER]: "bank-transfer",
-  [TransactionPaymentMethod.CREDIT_CARD]: "credit-card",
-  [TransactionPaymentMethod.BANK_SLIP]: "bank-slip",
-  [TransactionPaymentMethod.CASH]: "cash",
-  [TransactionPaymentMethod.PIX]: "pix",
-  [TransactionPaymentMethod.DEBIT_CARD]: "debit-card",
-  [TransactionPaymentMethod.OTHER]: "other",
+  [TransactionPaymentMethod.CREDIT_CARD]: "credit-card.svg",
+  [TransactionPaymentMethod.DEBIT_CARD]: "debit-card.svg",
+  [TransactionPaymentMethod.BANK_TRANSFER]: "bank-transfer.svg",
+  [TransactionPaymentMethod.BANK_SLIP]: "bank-slip.svg",
+  [TransactionPaymentMethod.CASH]: "money.svg",
+  [TransactionPaymentMethod.PIX]: "pix.svg",
+  [TransactionPaymentMethod.OTHER]: "other.svg",
 };
 
 export const TRANSACTION_CATEGORY_LABELS = {
   EDUCATION: "Educação",
+  ENTERTAINMENT: "Entretenimento",
   FOOD: "Alimentação",
   HEALTH: "Saúde",
   HOUSING: "Moradia",
-  ENTERTAINMENT: "Entretenimento",
+  OTHER: "Outros",
+  SALARY: "Salário",
   TRANSPORTATION: "Transporte",
   UTILITY: "Utilidades",
-  OUTHER: "Outros",
-  SALARY: "Salário",
 };
 
-export const TRANSACTIONS_PAYMENT_METHODS_LABELS = {
+export const TRANSACTION_PAYMENT_METHOD_LABELS = {
   BANK_TRANSFER: "Transferência Bancária",
-  CREDIT_CARD: "Cartão de Crédito",
   BANK_SLIP: "Boleto Bancário",
   CASH: "Dinheiro",
-  PIX: "PIX",
+  CREDIT_CARD: "Cartão de Crédito",
   DEBIT_CARD: "Cartão de Débito",
-  OTHER: "Outro",
+  OTHER: "Outros",
+  PIX: "Pix",
 };
 
-export const TRANSACTIONS_TYPE_OPTIONS = [
+export const TRANSACTION_TYPE_OPTIONS = [
   {
     value: TransactionType.EXPENSE,
     label: "Despesa",
@@ -55,36 +55,34 @@ export const TRANSACTION_PAYMENT_METHOD_OPTIONS = [
   {
     value: TransactionPaymentMethod.BANK_TRANSFER,
     label:
-      TRANSACTIONS_PAYMENT_METHODS_LABELS[
-        TransactionPaymentMethod.BANK_TRANSFER
-      ],
-  },
-  {
-    value: TransactionPaymentMethod.CREDIT_CARD,
-    label:
-      TRANSACTIONS_PAYMENT_METHODS_LABELS[TransactionPaymentMethod.CREDIT_CARD],
+      TRANSACTION_PAYMENT_METHOD_LABELS[TransactionPaymentMethod.BANK_TRANSFER],
   },
   {
     value: TransactionPaymentMethod.BANK_SLIP,
     label:
-      TRANSACTIONS_PAYMENT_METHODS_LABELS[TransactionPaymentMethod.BANK_SLIP],
+      TRANSACTION_PAYMENT_METHOD_LABELS[TransactionPaymentMethod.BANK_SLIP],
   },
   {
     value: TransactionPaymentMethod.CASH,
-    label: TRANSACTIONS_PAYMENT_METHODS_LABELS[TransactionPaymentMethod.CASH],
+    label: TRANSACTION_PAYMENT_METHOD_LABELS[TransactionPaymentMethod.CASH],
   },
   {
-    value: TransactionPaymentMethod.PIX,
-    label: TRANSACTIONS_PAYMENT_METHODS_LABELS[TransactionPaymentMethod.PIX],
+    value: TransactionPaymentMethod.CREDIT_CARD,
+    label:
+      TRANSACTION_PAYMENT_METHOD_LABELS[TransactionPaymentMethod.CREDIT_CARD],
   },
   {
     value: TransactionPaymentMethod.DEBIT_CARD,
     label:
-      TRANSACTIONS_PAYMENT_METHODS_LABELS[TransactionPaymentMethod.DEBIT_CARD],
+      TRANSACTION_PAYMENT_METHOD_LABELS[TransactionPaymentMethod.DEBIT_CARD],
   },
   {
     value: TransactionPaymentMethod.OTHER,
-    label: TRANSACTIONS_PAYMENT_METHODS_LABELS[TransactionPaymentMethod.OTHER],
+    label: TRANSACTION_PAYMENT_METHOD_LABELS[TransactionPaymentMethod.OTHER],
+  },
+  {
+    value: TransactionPaymentMethod.PIX,
+    label: TRANSACTION_PAYMENT_METHOD_LABELS[TransactionPaymentMethod.PIX],
   },
 ];
 
@@ -108,6 +106,10 @@ export const TRANSACTION_CATEGORY_OPTIONS = [
   {
     value: TransactionCategory.HOUSING,
     label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.HOUSING],
+  },
+  {
+    value: TransactionCategory.OTHER,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.OTHER],
   },
   {
     value: TransactionCategory.SALARY,
