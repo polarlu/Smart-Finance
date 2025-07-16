@@ -61,7 +61,7 @@ const TransactionsPieChart = ({
     },
   ];
   return (
-    <Card className="">
+    <Card>
       <ScrollArea className="col-span-2 flex h-full flex-col rounded-md border p-5 pb-6">
         <CardTitle className="font-bold">Resumo por Grafico</CardTitle>
         <CardContent className="flex-1 pb-0">
