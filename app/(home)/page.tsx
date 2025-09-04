@@ -1,8 +1,7 @@
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Navbar from "../_components/navbar";
 import SummaryCards from "./_components/summary-cards";
-import { isMatch } from "date-fns";
 import TransactionsPieChart from "./_components/transactions-pie-chart";
 import { getDashboard } from "../data/get-dashboard";
 import ExpencesPerCategory from "./_components/expences-per-category";
@@ -22,13 +21,19 @@ const Home = async ({ searchParams: { month } }: HomeProps) => {
   if (!userId) {
     redirect("/login");
   }
-  const monthIsInvalid = !month || !isMatch(month, "MM");
+
+  const monthNumber = Number(month);
+  const monthIsInvalid =
+    !month || isNaN(monthNumber) || monthNumber < 1 || monthNumber > 12;
+
   if (monthIsInvalid) {
-    redirect(`?month=${new Date().getMonth() + 1}`);
+    redirect(`/?month=${new Date().getMonth() + 1}`);
   }
+
   const dashboard = await getDashboard(month);
   const userCanAddTransaction = await canUserAddTransaction();
-  const user = await clerkClient().users.getUser(userId);
+  const user = await currentUser();
+
   return (
     <>
       <Navbar />
@@ -36,15 +41,13 @@ const Home = async ({ searchParams: { month } }: HomeProps) => {
         <div className="flex justify-between">
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-3">
-              <AiReportButton
-                month={month}
-                haspremiumPlan={
-                  user.publicMetadata.subscriptionPlan == "premium"
-                }
-              />
-              <TimeSelect />
-            </div>
+            <AiReportButton
+              month={month}
+              haspremiumPlan={
+                user?.publicMetadata?.subscriptionPlan === "premium"
+              }
+            />
+            <TimeSelect />
           </div>
         </div>
         <div className="grid grid-cols-[2fr,1fr] gap-6 overflow-hidden">
