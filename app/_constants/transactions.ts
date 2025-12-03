@@ -1,8 +1,5 @@
-import {
-  TransactionCategory,
-  TransactionPaymentMethod,
-  TransactionType,
-} from "@prisma/client";
+// app/_constants/transactions.ts
+import { TransactionPaymentMethod, TransactionType } from "@prisma/client";
 
 export const TRANSACTION_PAYMENT_METHOD_ICONS = {
   [TransactionPaymentMethod.CREDIT_CARD]: "credit-card.svg",
@@ -14,6 +11,7 @@ export const TRANSACTION_PAYMENT_METHOD_ICONS = {
   [TransactionPaymentMethod.OTHER]: "other.svg",
 };
 
+// ✅ Remova a dependência de TransactionCategory enum
 export const TRANSACTION_CATEGORY_LABELS = {
   EDUCATION: "Educação",
   ENTERTAINMENT: "Entretenimento",
@@ -86,41 +84,107 @@ export const TRANSACTION_PAYMENT_METHOD_OPTIONS = [
   },
 ];
 
+// ✅ CORRIGIDO - Sem importar TransactionCategory
 export const TRANSACTION_CATEGORY_OPTIONS = [
   {
-    value: TransactionCategory.EDUCATION,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.EDUCATION],
+    value: "EDUCATION",
+    label: TRANSACTION_CATEGORY_LABELS.EDUCATION,
   },
   {
-    value: TransactionCategory.ENTERTAINMENT,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.ENTERTAINMENT],
+    value: "ENTERTAINMENT",
+    label: TRANSACTION_CATEGORY_LABELS.ENTERTAINMENT,
   },
   {
-    value: TransactionCategory.FOOD,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.FOOD],
+    value: "FOOD",
+    label: TRANSACTION_CATEGORY_LABELS.FOOD,
   },
   {
-    value: TransactionCategory.HEALTH,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.HEALTH],
+    value: "HEALTH",
+    label: TRANSACTION_CATEGORY_LABELS.HEALTH,
   },
   {
-    value: TransactionCategory.HOUSING,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.HOUSING],
+    value: "HOUSING",
+    label: TRANSACTION_CATEGORY_LABELS.HOUSING,
   },
   {
-    value: TransactionCategory.OTHER,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.OTHER],
+    value: "OTHER",
+    label: TRANSACTION_CATEGORY_LABELS.OTHER,
   },
   {
-    value: TransactionCategory.SALARY,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.SALARY],
+    value: "SALARY",
+    label: TRANSACTION_CATEGORY_LABELS.SALARY,
   },
   {
-    value: TransactionCategory.TRANSPORTATION,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.TRANSPORTATION],
+    value: "TRANSPORTATION",
+    label: TRANSACTION_CATEGORY_LABELS.TRANSPORTATION,
   },
   {
-    value: TransactionCategory.UTILITY,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.UTILITY],
+    value: "UTILITY",
+    label: TRANSACTION_CATEGORY_LABELS.UTILITY,
   },
 ];
+
+/**
+ * Carrega categorias customizadas do localStorage
+ */
+export const getCustomCategories = (): Array<{
+  value: string;
+  label: string;
+}> => {
+  if (typeof window === "undefined") return [];
+
+  const stored = localStorage.getItem("customCategories");
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch (error) {
+      console.error("Error loading custom categories:", error);
+      return [];
+    }
+  }
+  return [];
+};
+
+/**
+ * Retorna TODAS as categorias: padrão + customizadas
+ */
+export const getAllCategoryOptions = (): Array<{
+  value: string;
+  label: string;
+}> => {
+  return [...TRANSACTION_CATEGORY_OPTIONS, ...getCustomCategories()];
+};
+
+/**
+ * Obtém o label de uma categoria (padrão ou customizada)
+ */
+export const getCategoryLabel = (category: string): string => {
+  // Primeiro tenta pegar das categorias padrão
+  if (
+    TRANSACTION_CATEGORY_LABELS[
+      category as keyof typeof TRANSACTION_CATEGORY_LABELS
+    ]
+  ) {
+    return TRANSACTION_CATEGORY_LABELS[
+      category as keyof typeof TRANSACTION_CATEGORY_LABELS
+    ];
+  }
+
+  // Se não encontrar, busca nas categorias customizadas
+  const customCategories = getCustomCategories();
+  const custom = customCategories.find((cat) => cat.value === category);
+
+  if (custom) {
+    return `⭐ ${custom.label}`;
+  }
+
+  // Se não encontrar em nenhum lugar, retorna o próprio valor
+  return category;
+};
+
+/**
+ * Verifica se uma categoria é customizada
+ */
+export const isCustomCategory = (category: string): boolean => {
+  return category.startsWith("CUSTOM_");
+};

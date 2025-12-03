@@ -1,3 +1,4 @@
+// app/(home)/_components/summary-cards.tsx
 import {
   PiggyBankIcon,
   TrendingDownIcon,
@@ -23,9 +24,8 @@ const SummaryCards = async ({
   userCanAddTransaction,
 }: SummaryCards) => {
   return (
-    <div className="space-y-6">
-      {/* PRIMEIRO CARD */}
-
+    <div className="space-y-4 sm:space-y-6">
+      {/* CARD PRINCIPAL - SALDO */}
       <SummaryCard
         icon={<WalletIcon size={16} />}
         title="Saldo"
@@ -34,8 +34,8 @@ const SummaryCards = async ({
         userCanAddTransaction={userCanAddTransaction}
       />
 
-      {/* OUTROS CARDS */}
-      <div className="grid grid-cols-3 gap-6">
+      {/* CARDS SECUNDÁRIOS - SEMPRE LADO A LADO */}
+      <div className="grid grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
         <SummaryCard
           icon={<PiggyBankIcon size={16} />}
           title="Investido"

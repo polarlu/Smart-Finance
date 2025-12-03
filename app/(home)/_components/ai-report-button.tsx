@@ -26,6 +26,7 @@ interface AiReportButtonProps {
 const AiReportButton = ({ month, haspremiumPlan }: AiReportButtonProps) => {
   const [report, setReport] = useState<string | null>(null);
   const [reportIsLoading, setReportIsLoading] = useState(false);
+
   const handleGenerateReport = async () => {
     try {
       setReportIsLoading(true);
@@ -37,6 +38,7 @@ const AiReportButton = ({ month, haspremiumPlan }: AiReportButtonProps) => {
       setReportIsLoading(false);
     }
   };
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -46,18 +48,23 @@ const AiReportButton = ({ month, haspremiumPlan }: AiReportButtonProps) => {
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-[600px]">
-        {!haspremiumPlan ? (
+        {/* ✅ CORRIGIDO - Se TEM premium, mostra o relatório */}
+        {haspremiumPlan ? (
           <>
             <DialogHeader>
-              <DialogTitle>Relatório de AI</DialogTitle>
+              <DialogTitle>Relatório de IA</DialogTitle>
               <DialogDescription>
-                Use inteligencia artificial para gerar relatórios detalhados
+                Use inteligência artificial para gerar relatórios detalhados
                 sobre suas finanças.
               </DialogDescription>
             </DialogHeader>
-            <ScrollArea className="pross-h4:text-white prose max-h-[450px] text-white prose-h3:text-white prose-strong:text-white">
-              <ReactMarkdown>{report ?? ""}</ReactMarkdown>
-            </ScrollArea>
+            {report && (
+              <ScrollArea className="max-h-[450px] max-w-full rounded-md border p-6">
+                <div className="prose max-w-none prose-headings:text-white prose-p:text-gray-200 prose-strong:text-gray-100 prose-li:text-gray-200">
+                  <ReactMarkdown>{report}</ReactMarkdown>
+                </div>
+              </ScrollArea>
+            )}
             <DialogFooter>
               <DialogClose asChild>
                 <Button variant="ghost">Cancelar</Button>
@@ -69,11 +76,13 @@ const AiReportButton = ({ month, haspremiumPlan }: AiReportButtonProps) => {
             </DialogFooter>
           </>
         ) : (
+          // ✅ CORRIGIDO - Se NÃO tem premium, mostra mensagem para assinar
           <>
             <DialogHeader>
-              <DialogTitle>Relatório de AI</DialogTitle>
+              <DialogTitle>Relatório de IA</DialogTitle>
               <DialogDescription>
-                Você precisa ser um usuário premium para gerar relatórios AI.
+                Você precisa ser um usuário premium para gerar relatórios com
+                IA.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -81,7 +90,7 @@ const AiReportButton = ({ month, haspremiumPlan }: AiReportButtonProps) => {
                 <Button variant="ghost">Cancelar</Button>
               </DialogClose>
               <Button asChild>
-                <Link href="/subscription"> Assinar plano Premium </Link>
+                <Link href="/subscription">Assinar plano Premium</Link>
               </Button>
             </DialogFooter>
           </>

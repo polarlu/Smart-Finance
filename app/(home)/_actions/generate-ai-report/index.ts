@@ -2,90 +2,119 @@
 
 import { db } from "@/app/_lib/prisma";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-// ✅ 1. Import da biblioteca oficial do Google
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GenerateAiReportSchema, generateAiReportSchema } from "./schema";
 
-// Verificação da API Key
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 if (!GEMINI_API_KEY) {
   throw new Error("GEMINI_API_KEY is not defined in environment variables.");
 }
 
 export const generateAiReport = async ({ month }: GenerateAiReportSchema) => {
-  generateAiReportSchema.parse({ month }); // Validação do mês recebido
-  const { userId } = auth(); // Removido 'await' pois auth() é síncrono no server-side
-  if (!userId) {
-    throw new Error("Unauthorized");
-  }
+  try {
+    // 1. Validação do input
+    generateAiReportSchema.parse({ month });
 
-  const user = await clerkClient().users.getUser(userId);
-  const hasPremiumPlan = user.publicMetadata.subscriptionPlan === "premium";
-  if (!hasPremiumPlan) {
-    throw new Error("You need a premium plan to generate AI reports.");
-  }
+    // 2. Autenticação
+    const { userId } = await auth();
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
 
-  // ✅ 2. Instanciando o cliente oficial do Gemini
-  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    // 3. Verifica plano premium
+    const user = await clerkClient.users.getUser(userId);
+    const hasPremiumPlan = user.publicMetadata?.subscriptionPlan === "premium";
+    if (!hasPremiumPlan) {
+      throw new Error(
+        "Você precisa de um plano premium para gerar relatórios com IA.",
+      );
+    }
 
-  // Pegar as transações do mês recebido
-  const year = new Date().getFullYear(); // Pega o ano atual dinamicamente
-  const startDate = new Date(`${year}-${month}-01`);
-  // Correção para pegar o último dia do mês corretamente
-  const endDate = new Date(year, parseInt(month), 0);
-  endDate.setHours(23, 59, 59, 999); // Garante que pegue todo o último dia
+    // 4. Datas do mês
+    const year = new Date().getFullYear();
+    const startDate = new Date(`${year}-${month}-01`);
+    const endDate = new Date(year, Number(month), 0);
+    endDate.setHours(23, 59, 59, 999);
 
-  const transactions = await db.transaction.findMany({
-    where: {
-      userId: userId, // Boa prática: filtrar transações pelo userId também
-      date: {
-        gte: startDate,
-        lte: endDate,
+    // 5. Buscar transações do usuário
+    const transactions = await db.transaction.findMany({
+      where: {
+        userId,
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
       },
-    },
-  });
+      orderBy: { date: "asc" },
+    });
 
-  if (transactions.length === 0) {
-    return "Não foram encontradas transações para este mês. Impossível gerar um relatório.";
+    if (transactions.length === 0) {
+      return "Não foram encontradas transações para este mês. Adicione transações para gerar um relatório.";
+    }
+
+    // 6. Montar prompt
+    const linhas = transactions.map((t) => {
+      const data = t.date.toLocaleDateString("pt-BR");
+      const valor = Number(t.amount).toFixed(2);
+      return `📅 ${data} | 💰 R$ ${valor} | ${t.type} | ${t.category} | ${t.name}`;
+    });
+
+    const prompt = `
+Você é um especialista em finanças pessoais. Analise as transações abaixo e gere um relatório completo em português do Brasil.
+
+Transações do mês ${month}/${year}:
+${linhas.join("\n")}
+
+O relatório deve conter:
+1. Resumo geral de receitas, despesas e saldo.
+2. Análise por categorias (quais mais gastam, quais mais recebem).
+3. Principais pontos de atenção.
+4. Recomendações práticas e personalizadas para o próximo mês.
+5. Sugestão de metas financeiras.
+
+Formate a resposta em Markdown, usando títulos, listas e emojis.
+`;
+
+    // 7. Chamar Gemini
+    console.log("GEMINI_API_KEY definida?", !!GEMINI_API_KEY);
+
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+
+    // ✅ Use APENAS esse modelo por enquanto
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    console.log("Resposta da IA (primeiros 100 chars):", text?.slice(0, 100));
+
+    if (!text) {
+      console.error(
+        "Gemini retornou resposta vazia:",
+        JSON.stringify(response, null, 2),
+      );
+      return "A IA não conseguiu gerar o relatório neste momento. Tente novamente em alguns instantes.";
+    }
+
+    return text;
+  } catch (error: unknown) {
+    const err = error as {
+      message?: string;
+      status?: number;
+      statusText?: string;
+      errorDetails?: unknown;
+    };
+
+    console.error("Erro em generateAiReport (detalhado):", {
+      message: err.message,
+      status: err.status,
+      statusText: err.statusText,
+      errorDetails: err.errorDetails,
+    });
+
+    return `Ocorreu um erro ao gerar o relatório com IA: ${
+      err.message ?? "erro desconhecido"
+    }`;
   }
-
-  // mandar as transações para o gemini e pedir para ele gerar um relatorio com insights
-  const promptContent = `Gere um relatório com insights sobre as minhas finanças, com dicas e orientações de como melhorar minha vida financeira.
-  As transações estão divididas por ponto e vírgula. A estrutura de cada uma é {DATA} - {VALOR} - {TIPO} - {CATEGORIA}. São elas:
-  ${transactions
-    .map(
-      (transaction) =>
-        `${transaction.date.toLocaleDateString("pt-BR")}-R$${transaction.amount.toFixed(2)}-${transaction.type}-${transaction.category}`,
-    )
-    .join(";")}`;
-
-  // ✅ 3. Chamada correta da API do Gemini
-  const chat = model.startChat({
-    history: [
-      {
-        role: "user",
-        parts: [
-          {
-            text: "Você é um especialista em gestão e organização de finanças pessoais. Você ajuda as pessoas a entenderem melhor suas finanças e a tomarem decisões financeiras mais informadas.",
-          },
-        ],
-      },
-      {
-        role: "model",
-        parts: [
-          {
-            text: "Entendido! Estou pronto para analisar os dados financeiros e fornecer insights valiosos.",
-          },
-        ],
-      },
-    ],
-  });
-
-  const result = await chat.sendMessage(promptContent);
-  const response = result.response;
-  const text = response.text();
-
-  // ✅ 4. Retornando o texto da resposta
-  return text;
 };

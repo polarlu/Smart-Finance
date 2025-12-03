@@ -14,6 +14,11 @@ export const transactionsColumns: ColumnDef<Transaction>[] = [
   {
     accessorKey: "name",
     header: "Nome",
+    cell: ({ row: { original: transaction } }) => (
+      <span className="block max-w-[80px] truncate sm:max-w-[120px] md:max-w-none">
+        {transaction.name}
+      </span>
+    ),
   },
   {
     accessorKey: "type",
@@ -22,18 +27,23 @@ export const transactionsColumns: ColumnDef<Transaction>[] = [
       <TransactionTypeBadge transaction={transaction} />
     ),
   },
-
   {
     accessorKey: "category",
     header: "Categoria",
     cell: ({ row: { original: transaction } }) =>
       TRANSACTION_CATEGORY_LABELS[transaction.category],
+    meta: {
+      hideOnMobile: true,
+    },
   },
   {
     accessorKey: "paymentMethod",
-    header: "Metodo de Pagamento",
+    header: "Método de Pagamento",
     cell: ({ row: { original: transaction } }) =>
       TRANSACTION_PAYMENT_METHOD_LABELS[transaction.paymentMethod],
+    meta: {
+      hideOnMobile: true,
+    },
   },
   {
     accessorKey: "date",
@@ -44,22 +54,28 @@ export const transactionsColumns: ColumnDef<Transaction>[] = [
         month: "long",
         year: "numeric",
       }),
+    meta: {
+      hideOnMobile: true,
+    },
   },
   {
     accessorKey: "amount",
     header: "Valor",
-    cell: ({ row: { original: transaction } }) =>
-      new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }).format(Number(transaction.amount)),
+    cell: ({ row: { original: transaction } }) => (
+      <span className="block text-[10px] font-semibold sm:text-xs md:text-sm">
+        {new Intl.NumberFormat("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        }).format(Number(transaction.amount))}
+      </span>
+    ),
   },
   {
     accessorKey: "actions",
     header: "Ações",
     cell: ({ row: { original: transaction } }) => {
       return (
-        <div className="space-x-1">
+        <div className="flex items-center gap-0.5 sm:gap-1">
           <EditTransactionButton transaction={transaction} />
           <DeleteTransactionButton transactionId={transaction.id} />
         </div>

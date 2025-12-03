@@ -10,6 +10,7 @@ import TimeSelect from "./_components/time-select";
 import LastTransactions from "./_components/last-transactions";
 import { canUserAddTransaction } from "../data/can-user-add-transaction";
 import AiReportButton from "./_components/ai-report-button";
+import { ScrollArea } from "../_components/ui/scroll-area";
 
 interface HomeProps {
   searchParams?: {
@@ -17,76 +18,98 @@ interface HomeProps {
   };
 }
 
-export const dynamic = "force-dynamic"; // força execução dinâmica (evita coleta de dados no build)
+export const dynamic = "force-dynamic";
 
 const Home = async ({ searchParams }: HomeProps) => {
-  // lê mês dos query params; normaliza para 'MM' (01..12)
   const rawMonth = (searchParams?.month ?? "").toString();
   const parsedMonth = Number(rawMonth);
   const monthNumber =
     !rawMonth || Number.isNaN(parsedMonth)
       ? new Date().getMonth() + 1
       : parsedMonth;
-  // garante string com 1..12 (se inválido, usa mês atual)
   const month = String(
     monthNumber >= 1 && monthNumber <= 12
       ? monthNumber
       : new Date().getMonth() + 1,
   ).padStart(2, "0");
 
-  // autenticação
   const { userId } = await auth();
   if (!userId) {
-    // se não estiver logado, redireciona para login
     redirect("/login");
   }
 
-  // busca dados do dashboard (getDashboard já trata usuário ausente durante o build)
   const dashboard = await getDashboard(month);
-
-  // verifica se o usuário pode adicionar transação
   const userCanAddTransaction = await canUserAddTransaction();
-
-  // pega info do usuário (currentUser é preferível para Server Components)
   const user = await currentUser();
 
   return (
-    <>
+    <div className="flex h-screen flex-col overflow-hidden">
       <Navbar />
-      <div className="flex h-full flex-col space-y-6 overflow-hidden p-6">
-        <div className="flex justify-between">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <div className="flex items-center gap-3">
-            <AiReportButton
-              month={month}
-              haspremiumPlan={
-                user?.publicMetadata?.subscriptionPlan === "premium"
-              }
-            />
-            <TimeSelect />
-          </div>
-        </div>
+      <ScrollArea className="flex-1">
+        <div className="space-y-4 p-4 sm:space-y-6 sm:p-6 lg:p-8">
+          {/* Header Section - Layout Diferente para Mobile */}
+          <div className="space-y-3 sm:space-y-0">
+            {/* Mobile: Dashboard + TimeSelect na mesma linha */}
+            <div className="flex items-center justify-between sm:hidden">
+              <h1 className="text-xl font-bold">Dashboard</h1>
+              <TimeSelect />
+            </div>
 
-        <div className="grid grid-cols-[2fr,1fr] gap-6 overflow-hidden">
-          <div className="flex flex-col gap-6 overflow-hidden">
-            <SummaryCards
-              month={month}
-              {...dashboard}
-              userCanAddTransaction={userCanAddTransaction}
-            />
-
-            <div className="grid h-full grid-cols-3 grid-rows-1 gap-6 overflow-hidden">
-              <TransactionsPieChart {...dashboard} />
-              <ExpencesPerCategory
-                expensesPerCategory={dashboard.totalExpensePerCategory}
+            {/* Mobile: AiReportButton abaixo */}
+            <div className="sm:hidden">
+              <AiReportButton
+                month={month}
+                haspremiumPlan={
+                  user?.publicMetadata?.subscriptionPlan === "premium"
+                }
               />
+            </div>
+
+            {/* Desktop/Tablet: Layout Original */}
+            <div className="hidden sm:flex sm:flex-row sm:items-center sm:justify-between">
+              <h1 className="text-2xl font-bold lg:text-3xl">Dashboard</h1>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <AiReportButton
+                  month={month}
+                  haspremiumPlan={
+                    user?.publicMetadata?.subscriptionPlan === "premium"
+                  }
+                />
+                <TimeSelect />
+              </div>
             </div>
           </div>
 
-          <LastTransactions lastTransactions={dashboard.lastTransactions} />
+          {/* Layout Mobile-First com Grid Responsivo */}
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-[2fr,1fr]">
+            {/* Coluna Principal */}
+            <div className="flex flex-col gap-4 sm:gap-6">
+              {/* Summary Cards */}
+              <SummaryCards
+                month={month}
+                {...dashboard}
+                userCanAddTransaction={userCanAddTransaction}
+              />
+
+              {/* Grid de Gráficos - Mobile: empilhado, Tablet: 2 cols, Desktop: 3 cols */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
+                <TransactionsPieChart {...dashboard} />
+                <div className="sm:col-span-2 lg:col-span-2">
+                  <ExpencesPerCategory
+                    expensesPerCategory={dashboard.totalExpensePerCategory}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Coluna de Transações - Mobile: abaixo, Desktop: lateral */}
+            <div className="order-last lg:order-none">
+              <LastTransactions lastTransactions={dashboard.lastTransactions} />
+            </div>
+          </div>
         </div>
-      </div>
-    </>
+      </ScrollArea>
+    </div>
   );
 };
 
