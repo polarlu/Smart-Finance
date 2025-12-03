@@ -22,8 +22,13 @@ const ExpensesPerCategory = ({
           <div key={category.category} className="space-y-2">
             <div className="flex w-full justify-between">
               <p className="text-sm font-bold">
-                {TRANSACTION_CATEGORY_LABELS[category.category]}
+                {
+                  TRANSACTION_CATEGORY_LABELS[
+                    category.category as keyof typeof TRANSACTION_CATEGORY_LABELS
+                  ]
+                }
               </p>
+
               <p className="text-sm font-bold">{category.percentageOfTotal}%</p>
             </div>
             <Progress value={category.percentageOfTotal} />
