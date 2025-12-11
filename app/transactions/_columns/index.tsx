@@ -3,12 +3,10 @@
 import { Transaction } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
 import TransactionTypeBadge from "../_components/type-badge";
-import {
-  TRANSACTION_CATEGORY_LABELS,
-  TRANSACTION_PAYMENT_METHOD_LABELS,
-} from "@/app/_constants/transactions";
+import { TRANSACTION_PAYMENT_METHOD_LABELS } from "@/app/_constants/transactions";
 import EditTransactionButton from "../_components/edit-transactions-button";
 import DeleteTransactionButton from "../_components/delete-transaction-button";
+import { TRANSACTION_CATEGORY_LABELS } from "@/app/_constants/transactions";
 
 export const transactionsColumns: ColumnDef<Transaction>[] = [
   {
@@ -28,10 +26,11 @@ export const transactionsColumns: ColumnDef<Transaction>[] = [
     ),
   },
   {
-    accessorKey: "category",
     header: "Categoria",
     cell: ({ row: { original: transaction } }) =>
-      TRANSACTION_CATEGORY_LABELS[transaction.category],
+      TRANSACTION_CATEGORY_LABELS[
+        transaction.category as keyof typeof TRANSACTION_CATEGORY_LABELS
+      ],
     meta: {
       hideOnMobile: true,
     },
