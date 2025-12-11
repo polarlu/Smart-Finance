@@ -6,7 +6,7 @@ export type TransactionPercentagePerType = {
 };
 
 export interface TotalExpensePerCategory {
-  category: keyof typeof TRANSACTION_CATEGORY_LABELS; // ✅ tipo correto
+  category: keyof typeof TRANSACTION_CATEGORY_LABELS;
   totalAmount: number;
   percentageOfTotal: number;
 }
