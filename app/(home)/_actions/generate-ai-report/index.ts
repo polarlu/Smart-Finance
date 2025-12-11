@@ -2,26 +2,25 @@
 
 import { db } from "@/app/_lib/prisma";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GenerateAiReportSchema, generateAiReportSchema } from "./schema";
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-if (!GEMINI_API_KEY) {
-  throw new Error("GEMINI_API_KEY is not defined in environment variables.");
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+const DEEPSEEK_API_BASE_URL =
+  process.env.DEEPSEEK_API_BASE_URL ?? "https://api.deepseek.com/v1";
+
+if (!DEEPSEEK_API_KEY) {
+  throw new Error("DEEPSEEK_API_KEY is not defined in environment variables.");
 }
 
 export const generateAiReport = async ({ month }: GenerateAiReportSchema) => {
   try {
-    // 1. Validação do input
     generateAiReportSchema.parse({ month });
 
-    // 2. Autenticação
     const { userId } = await auth();
     if (!userId) {
       throw new Error("Unauthorized");
     }
 
-    // 3. Verifica plano premium
     const user = await clerkClient.users.getUser(userId);
     const hasPremiumPlan = user.publicMetadata?.subscriptionPlan === "premium";
     if (!hasPremiumPlan) {
@@ -30,13 +29,11 @@ export const generateAiReport = async ({ month }: GenerateAiReportSchema) => {
       );
     }
 
-    // 4. Datas do mês
     const year = new Date().getFullYear();
     const startDate = new Date(`${year}-${month}-01`);
     const endDate = new Date(year, Number(month), 0);
     endDate.setHours(23, 59, 59, 999);
 
-    // 5. Buscar transações do usuário
     const transactions = await db.transaction.findMany({
       where: {
         userId,
@@ -52,7 +49,6 @@ export const generateAiReport = async ({ month }: GenerateAiReportSchema) => {
       return "Não foram encontradas transações para este mês. Adicione transações para gerar um relatório.";
     }
 
-    // 6. Montar prompt
     const linhas = transactions.map((t) => {
       const data = t.date.toLocaleDateString("pt-BR");
       const valor = Number(t.amount).toFixed(2);
@@ -67,54 +63,72 @@ ${linhas.join("\n")}
 
 O relatório deve conter:
 1. Resumo geral de receitas, despesas e saldo.
-2. Análise por categorias (quais mais gastam, quais mais recebem).
+2. Análise por categorias.
 3. Principais pontos de atenção.
-4. Recomendações práticas e personalizadas para o próximo mês.
+4. Recomendações práticas para o próximo mês.
 5. Sugestão de metas financeiras.
 
 Formate a resposta em Markdown, usando títulos, listas e emojis.
 `;
 
-    // 7. Chamar Gemini
-    console.log("GEMINI_API_KEY definida?", !!GEMINI_API_KEY);
+    // ✅ Chamada à API do DeepSeek (modelo de chat)
+    const response = await fetch(`${DEEPSEEK_API_BASE_URL}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "deepseek-chat",
+        messages: [
+          {
+            role: "system",
+            content:
+              "Você é um especialista em finanças pessoais que gera relatórios financeiros claros, detalhados e em português do Brasil.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.7,
+      }),
+    });
 
-    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("DeepSeek status:", response.status, response.statusText);
+      console.error("DeepSeek raw body:", errorText);
+      throw new Error("Falha ao chamar a API da DeepSeek.");
+    }
 
-    // ✅ Use APENAS esse modelo por enquanto
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error("DeepSeek status:", response.status, response.statusText);
+      console.error("DeepSeek body:", errorBody);
+      throw new Error("Falha ao chamar a API da DeepSeek.");
+    }
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      console.error("Erro DeepSeek:", err ?? response.statusText);
+      throw new Error("Falha ao chamar a API da DeepSeek.");
+    }
 
-    console.log("Resposta da IA (primeiros 100 chars):", text?.slice(0, 100));
+    const data = (await response.json()) as {
+      choices?: { message?: { content?: string } }[];
+    };
+
+    const text = data.choices?.[0]?.message?.content ?? "";
 
     if (!text) {
-      console.error(
-        "Gemini retornou resposta vazia:",
-        JSON.stringify(response, null, 2),
-      );
       return "A IA não conseguiu gerar o relatório neste momento. Tente novamente em alguns instantes.";
     }
 
     return text;
   } catch (error: unknown) {
-    const err = error as {
-      message?: string;
-      status?: number;
-      statusText?: string;
-      errorDetails?: unknown;
-    };
-
-    console.error("Erro em generateAiReport (detalhado):", {
-      message: err.message,
-      status: err.status,
-      statusText: err.statusText,
-      errorDetails: err.errorDetails,
-    });
-
-    return `Ocorreu um erro ao gerar o relatório com IA: ${
-      err.message ?? "erro desconhecido"
-    }`;
+    console.error("Erro em generateAiReport (DeepSeek):", error);
+    const msg = (error as { message?: string }).message ?? "erro desconhecido";
+    return `Ocorreu um erro ao gerar o relatório com IA: ${msg}`;
   }
 };
