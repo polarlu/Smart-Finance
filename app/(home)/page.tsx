@@ -38,7 +38,7 @@ const Home = async ({ searchParams }: HomeProps) => {
     redirect("/login");
   }
 
-  const dashboard = await getDashboard(month);
+  const dashboard = await getDashboard({ month });
   const userCanAddTransaction = await canUserAddTransaction();
   const user = await currentUser();
 
@@ -93,7 +93,12 @@ const Home = async ({ searchParams }: HomeProps) => {
 
               {/* Grid de Gráficos - Mobile: empilhado, Tablet: 2 cols, Desktop: 3 cols */}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
-                <TransactionsPieChart {...dashboard} />
+                <TransactionsPieChart
+                  typesPercentage={dashboard.transactionCountByType}
+                  depositsTotal={dashboard.depositsTotal}
+                  investmentsTotal={dashboard.investmentsTotal}
+                  expensesTotal={dashboard.expensesTotal}
+                />
                 <div className="sm:col-span-2 lg:col-span-2">
                   <ExpencesPerCategory
                     expensesPerCategory={dashboard.totalExpensePerCategory}
