@@ -1,5 +1,5 @@
 // app/(home)/page.tsx
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Navbar from "../_components/navbar";
 import SummaryCards from "./_components/summary-cards";
@@ -40,7 +40,6 @@ const Home = async ({ searchParams }: HomeProps) => {
 
   const dashboard = await getDashboard({ month });
   const userCanAddTransaction = await canUserAddTransaction();
-  const user = await currentUser();
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">
@@ -57,24 +56,14 @@ const Home = async ({ searchParams }: HomeProps) => {
 
             {/* Mobile: AiReportButton abaixo */}
             <div className="sm:hidden">
-              <AiReportButton
-                month={month}
-                haspremiumPlan={
-                  user?.publicMetadata?.subscriptionPlan === "premium"
-                }
-              />
+              <AiReportButton />
             </div>
 
             {/* Desktop/Tablet: Layout Original */}
             <div className="hidden sm:flex sm:flex-row sm:items-center sm:justify-between">
               <h1 className="text-2xl font-bold lg:text-3xl">Dashboard</h1>
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                <AiReportButton
-                  month={month}
-                  haspremiumPlan={
-                    user?.publicMetadata?.subscriptionPlan === "premium"
-                  }
-                />
+                <AiReportButton />
                 <TimeSelect />
               </div>
             </div>
@@ -94,7 +83,6 @@ const Home = async ({ searchParams }: HomeProps) => {
               {/* Grid de Gráficos - Mobile: empilhado, Tablet: 2 cols, Desktop: 3 cols */}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
                 <TransactionsPieChart
-                  typesPercentage={dashboard.transactionCountByType}
                   depositsTotal={dashboard.depositsTotal}
                   investmentsTotal={dashboard.investmentsTotal}
                   expensesTotal={dashboard.expensesTotal}

@@ -92,6 +92,7 @@ export const getDashboard = async ({ month }: GetDashboardParams) => {
     transactionCountByType[item.type] = percentage;
   });
 
+  // ✅ Agora o percentual da categoria é calculado em relação à RECEITA TOTAL (depositsTotal)
   const totalExpensePerCategory: TotalExpensePerCategory[] = (
     await db.transaction.groupBy({
       by: ["category"],
@@ -105,10 +106,10 @@ export const getDashboard = async ({ month }: GetDashboardParams) => {
     category: item.category as keyof typeof TRANSACTION_CATEGORY_LABELS,
     totalAmount: Number(item._sum.amount ?? 0),
     percentageOfTotal:
-      expensesTotal === 0
+      depositsTotal === 0
         ? 0
         : Number(
-            ((Number(item._sum.amount ?? 0) / expensesTotal) * 100).toFixed(2),
+            ((Number(item._sum.amount ?? 0) / depositsTotal) * 100).toFixed(2),
           ),
   }));
 
